@@ -1,7 +1,11 @@
 from rest_framework import filters, mixins, viewsets
 
-from api.serializers import CategorySerializer, GenreSerializer
-from reviews.models import Category, Genre
+from api.serializers import (CategorySerializer, GenreSerializer,
+                             TitleSerializer, TitleCreateSerializer)
+from api.filters import TitleFilter
+from reviews.models import Category, Genre, Title
+
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class ListCreateDestroyViewSet(
@@ -20,6 +24,7 @@ class CategoryViewSet(ListCreateDestroyViewSet):
     # permission_classes = 
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
+    lookup_field = 'slug'
 
 
 class GenreViewSet(ListCreateDestroyViewSet):
@@ -29,3 +34,17 @@ class GenreViewSet(ListCreateDestroyViewSet):
     search_fields = ('name',)
     # написать пермишен
     # permission_classes = 
+    lookup_field = 'slug'
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all() # Можно здесь прописать функцию подсчета рейтинга. Нужна модель Review
+    # написать пермишен
+    # permission_classes =
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
+    def get_serializer_class(self):
+        if self.request.method in ('POST', 'PATCH',):
+            return TitleCreateSerializer
+        return TitleSerializer
+    
