@@ -1,14 +1,25 @@
 from rest_framework.routers import DefaultRouter
-from api.views import CommentViewSet, ReviewViewSet
+from api.views import (
+    CommentViewSet, ReviewViewSet, CategoryViewSet,
+    GenreViewSet, TitleViewSet
+)
 from django.urls import path, include
 
 
 router = DefaultRouter()
 
-# Если модель Title будет сделана, нужно поменять на r'titles/(?P<title_id>^[-a-zA-Z0-9_]+$)/reviews'
-router.register(r'reviews', ReviewViewSet, basename='reviews')
-# Если модель Title будет сделана, нужно поменять на r'titles/(?P<title_id>^[-a-zA-Z0-9_]+$)/reviews/(?P<review_id>[\d]+)/comment'
-router.register(r'reviews/(?P<review_id>[\d]+)/comments', CommentViewSet, basename='comments')
+router.register(r'categories', CategoryViewSet, basename='categories')
+router.register(r'genres', GenreViewSet, basename='genres')
+router.register(
+    r'titles/(?P<title_id>[\d]+)/reviews',
+    ReviewViewSet, basename='reviews'
+)
+router.register(r'titles', TitleViewSet, basename='titles')
+router.register(
+    r'titles/(?P<title_id>[\d]+)/reviews/(?P<review_id>[\d]+)/comments',
+    CommentViewSet, basename='comments'
+)
+
 
 
 urlpatterns = [
