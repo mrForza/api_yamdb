@@ -1,9 +1,65 @@
-from rest_framework import serializers
+from rest_framework import serializers, auth_users
 from rest_framework.relations import SlugRelatedField
-
 from reviews.models import Category, Genre, Title
-
 from django.db.models import Avg
+from reviews.models import User
+
+
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role',
+        )
+        model = User
+
+
+class MeUserSerializer(UserSerializer):
+
+    class Meta:
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role',
+        )
+        model = User
+        read_only_fields = ('role', )
+
+
+class SignSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = (
+            'username',
+            'email',
+            'confirmation_code',
+        )
+        model = User
+        extra_kwargs = {'confirmation_code': {'write_only': True}}
+
+    def validate(self, data):
+        if data['username'] == 'me':
+            raise serializers.ValidationError(
+                'Использовать имя me в качестве username запрещено')
+        return data
+
+
+class TokenSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = (
+            'username',
+            'confirmation_code',
+        )
+        model = User
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -30,8 +86,7 @@ class TitleSerializer(serializers.ModelSerializer):
         read_only_fields = ['name', 'year', 'rating',
                             'description', 'genre', 'category']
     def get_rating(self, obj):
-        ...# Можно здесь прописать функцию подсчета рейтинга. Нужна модель Review
-#оставлю это пока здесь https://question-it.com/questions/5840768/kak-rasschitat-srednee-znachenie-nekotorogo-polja-v-modeljah-django-i-otpravit-ego-v-api-otdyha
+        pass
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
