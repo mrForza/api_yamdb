@@ -50,25 +50,34 @@ class APISign(APIView):
     permission_classes = (AllowAny, )
 
     def post(self, request):
-        serializer = SignSerializer(data=request.data)
-
-        if serializer.is_valid():
-            email = request.data.get('email')
-            confirmation_code = str(randint(0, 999999)).zfill(6)
+        try:
+            user = get_object_or_404(
+                User,
+                username=request.data.get('username'),
+                email=request.data.get('email'),
+            )
             send_mail(
                 subject='Confirmation code',
-                message=f'Ваш код подтверждения: {confirmation_code}',
+                message=f'Ваш код подтверждения: {user.confirmation_code}',
                 from_email='api_yamdb@yamdb.not',
-                recipient_list=[email],
+                recipient_list=[user.email],
                 fail_silently=True,
             )
-            serializer.save(confirmation_code=confirmation_code)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        elif User.objects.filter(
-            username=request.data.get('username'),
-            email=request.data.get('email')
-        ):
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(request.data, status=status.HTTP_200_OK)
+        except Exception:
+            serializer = SignSerializer(data=request.data)
+            if serializer.is_valid():
+                email = request.data.get('email')
+                confirmation_code = str(randint(0, 999999)).zfill(6)
+                send_mail(
+                    subject='Confirmation code',
+                    message=f'Ваш код подтверждения: {confirmation_code}',
+                    from_email='api_yamdb@yamdb.not',
+                    recipient_list=[email],
+                    fail_silently=True,
+                )
+                serializer.save(confirmation_code=confirmation_code)
+                return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
