@@ -45,7 +45,6 @@ class User(AbstractUser):
         return self.username
 
 
-
 class Category(models.Model):
     name = models.CharField(max_length=256,
                             verbose_name='Категория')

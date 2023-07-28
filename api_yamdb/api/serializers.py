@@ -1,4 +1,4 @@
-from rest_framework import serializers, auth_users
+from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from reviews.models import Category, Genre, Title
 from django.db.models import Avg

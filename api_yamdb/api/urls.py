@@ -5,6 +5,7 @@ from api.views import UserViewSet, MeDetail, APISign, TokenView, CategoryViewSet
 
 
 router = DefaultRouter()
+
 router.register('users', UserViewSet)
 router.register(r'categories', CategoryViewSet, basename='categories')
 router.register(r'genres', GenreViewSet, basename='genres')
@@ -16,4 +17,4 @@ urlpatterns = [
     path('v1/auth/signup/', APISign.as_view(), name='signup'),
     path('v1/users/me/', MeDetail.as_view(), name='me_detail'),
     path('v1/', include(router.urls)),
-
+]
