@@ -9,12 +9,8 @@ router.register('v1/users', UserViewSet)
 
 
 urlpatterns = [
+    path('v1/auth/token/', TokenView.as_view(), name='token'),
     path('v1/auth/signup/', APISign.as_view(), name='signup'),
-    path(
-        'v1/auth/token/',
-        TokenView.as_view(),
-        name='token_obtain_pair',
-    ),
     path('v1/users/me/', MeDetail.as_view(), name='me_detail'),
     path('', include(router.urls)),
 ]
