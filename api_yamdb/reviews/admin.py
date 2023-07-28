@@ -1,7 +1,8 @@
 from django.contrib import admin
 from reviews.models import (
-    Review, Comment, Genre, Category, Title
+    Review, Comment, Genre, Category, Title, User
 )
+from django.contrib.auth.admin import UserAdmin
 
 
 class ReviewAdmin(admin.ModelAdmin):
@@ -21,6 +22,8 @@ class CommentAdmin(admin.ModelAdmin):
     )
     search_fields = ('text', )
     empty_value_display = 'не задано'
+
+
 
 
 class CategoryAdmin(admin.ModelAdmin):
@@ -53,9 +56,18 @@ class TitleAdmin(admin.ModelAdmin):
     list_filter = ('name',)
     empty_value_display = 'не задано'
 
+    
+UserAdmin.fieldsets += (
+    ('Extra Fields', {'fields': ('role', 'bio', )}),
+)
 
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Genre, GenreAdmin)
 admin.site.register(Title, TitleAdmin)
 admin.register(Review, ReviewAdmin)
 admin.register(Comment, CommentAdmin)
+admin.site.register(User, UserAdmin)
+    
+
+
+
