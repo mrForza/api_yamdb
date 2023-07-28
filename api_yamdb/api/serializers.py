@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
-from reviews.models import Category, Genre, Title
+from reviews.models import (
+    Review, Comment, Category, Genre, Title, User
+)
 from django.db.models import Avg
-from reviews.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -100,3 +101,30 @@ class TitleCreateSerializer(serializers.ModelSerializer):
         model = Title
         fields = ['id', 'name', 'year', 'description',
                   'genre', 'category']
+
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True
+    )
+    title = serializers.StringRelatedField(
+        read_only=True
+    )
+
+    class Meta:
+        model = Review
+        fields = '__all__'
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True
+    )
+    
+    class Meta:
+        model = Comment,
+        fields = '__all__'
+

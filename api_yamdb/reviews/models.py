@@ -1,8 +1,13 @@
 from django.db import models
+from django.core import validators
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.core import validators
 
+
+User = get_user_model()
 
 ROLES = (
     ('user', 'пользователь'),
@@ -122,3 +127,47 @@ class TitleGenre(models.Model):
     class Meta:
         verbose_name = 'Произведение и жанр'
         verbose_name_plural = 'Произведения и жанры'
+
+
+class Review(models.Model):
+    text = models.TextField(verbose_name='Текст отзыва')
+    score = models.SmallIntegerField(
+        verbose_name='Оценка',
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(10)
+        ]
+    )
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        verbose_name='Автор', related_name='reviews',
+        unique=True
+    )
+    pub_date = models.DateTimeField(
+        verbose_name='Дата и время публикации',
+        auto_now_add=True
+    )
+    title = models.ForeignKey(
+        Title, on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+
+
+class Comment(models.Model):
+    text = models.TextField(verbose_name='Текст комментария')
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        verbose_name='Автор', related_name='comments',
+    )
+    review = models.ForeignKey(
+        Review, on_delete=models.CASCADE,
+        verbose_name='Отзыв'
+    )
+    pub_date = models.DateTimeField(
+        verbose_name='Дата и время публикации',
+        auto_now_add=True
+    )
+    review = models.ForeignKey(
+        Review, on_delete=models.CASCADE,
+        related_name='comments'
+    )
