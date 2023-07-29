@@ -93,7 +93,6 @@ class TokenView(TokenObtainPairView):
             confirmation_code = request.data.get('confirmation_code')
             if confirmation_code == user.confirmation_code:
                 refresh = RefreshToken.for_user(user)
-
                 data = {
                     'token': str(refresh.access_token),
                 }
