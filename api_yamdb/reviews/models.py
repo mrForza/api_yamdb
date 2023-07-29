@@ -7,8 +7,6 @@ from django.utils.translation import gettext_lazy as _
 from django.core import validators
 
 
-User = get_user_model()
-
 ROLES = (
     ('user', 'пользователь'),
     ('moderator', 'модератор'),

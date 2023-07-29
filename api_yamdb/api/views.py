@@ -6,7 +6,7 @@ from api.serializers import (
     ReviewSerializer, CommentSerializer
 )
 from api.filters import TitleFilter
-from api.permissions import IsAdmin
+from api.permissions import IsAdmin, IsAdminOrReadOnly
 
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
@@ -76,8 +76,7 @@ class ListCreateDestroyViewSet(
 class CategoryViewSet(ListCreateDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    # написать пермишен
-    # permission_classes = 
+    permission_classes = (IsAdminOrReadOnly, )
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -88,15 +87,13 @@ class GenreViewSet(ListCreateDestroyViewSet):
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
-    # написать пермишен
-    # permission_classes = 
+    permission_classes = (IsAdminOrReadOnly, )
     lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all() # Можно здесь прописать функцию подсчета рейтинга. Нужна модель Review
-    # написать пермишен
-    # permission_classes =
+    queryset = Title.objects.all()
+    permission_classes = (IsAdminOrReadOnly, )
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
@@ -104,15 +101,10 @@ class TitleViewSet(viewsets.ModelViewSet):
         if self.request.method in ('POST', 'PATCH',):
             return TitleCreateSerializer
         return TitleSerializer
-    
-    def get_serializer_class(self):
-        if self.request.method in ('POST', 'PATCH',):
-            return TitleCreateSerializer
-        return TitleSerializer
+
 
 class UserViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdmin, )
-
     lookup_field = 'username'
     queryset = User.objects.all()
     serializer_class = UserSerializer
