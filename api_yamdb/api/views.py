@@ -12,8 +12,7 @@ from django.core.mail import send_mail
 
 from reviews.models import User
 from api.serializers import (
-    UserSerializer, SignSerializer,
-    MeUserSerializer, TokenSerializer
+    UserSerializer, SignSerializer, MeUserSerializer, TokenSerializer
 )
 from api.permissions import IsAdmin
 
