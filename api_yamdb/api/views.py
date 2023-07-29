@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django_filters.rest_framework import DjangoFilterBackend
+from reviews.models import Category, Genre, Title, User, Review
 
 from rest_framework import viewsets, status, filters, mixins
 from rest_framework.views import APIView
@@ -22,7 +23,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from reviews.models import Category, Genre, Title, User, Review
+from reviews.models import User
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -185,7 +186,6 @@ class TokenView(TokenObtainPairView):
             confirmation_code = request.data.get('confirmation_code')
             if confirmation_code == user.confirmation_code:
                 refresh = RefreshToken.for_user(user)
-
                 data = {
                     'token': str(refresh.access_token),
                 }

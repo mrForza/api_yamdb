@@ -54,6 +54,7 @@ class SignSerializer(serializers.ModelSerializer):
 
 
 class TokenSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(max_length=256)
 
     class Meta:
         fields = (
