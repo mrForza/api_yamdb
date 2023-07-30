@@ -105,7 +105,7 @@ python manage.py runserver
 * DRF
 
 ## Авторы:
-**Роман Громов**
-**[Viacheslav Korablev](https://github.com/VK73-dev/)**
-**Любовь Скутина**
+- **Роман Громов**
+- **[Viacheslav Korablev](https://github.com/VK73-dev/)**
+- **Любовь Скутина**
 
