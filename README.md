@@ -1,16 +1,16 @@
-# api_final_yatube
-**Yatube** — это платформа для блогов. Блог-сервис предлагает возможность зарегистрироваться, создать, отредактировать или удалить собственный пост, прокомментировать пост другого автора и подписаться на него.
+# api_yamdb
+**yamdb** — это платформа для публикации произведений. Сервис позволяет добавлять, модифицировать и удалять различные жанры, категории, произведения, отзывы и комментарии к ним по средствам API
 
 ## Как запустить проект:
 
 Клонировать репозиторий и перейти в него в командной строке:
 
 ```
-git clone git@github.com:VK73-dev/api_final_yatube.git
+git clone git@github.com:mrForza/api_yamdb.git
 ```
 
 ```
-cd api_final_yatube
+cd api_yamdb
 ```
 
 Cоздать и активировать виртуальное окружение:
@@ -53,30 +53,18 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-## Примеры запросов к API:
-Получение публикаций: [GET /api/v1/posts/](http://127.0.0.1:8000/api/v1/posts/)
+## Примеры некоторых запросов к API:
+Получение категорий: [GET /api/v1/categories/](http://127.0.0.1:8000/api/v1/categories/)
 
-Получение публикации: [GET /api/v1/posts/{id}/](http://127.0.0.1:8000/api/v1/posts/{id}/)
+Добавление категории: [POST /api/v1/categories/](http://127.0.0.1:8000/api/v1/categories/)
 
-Создание публикации: [POST /api/v1/posts/](http://127.0.0.1:8000/api/v1/posts/)
-```
-{
-"text": "string",
-"image": "string",
-"group": 0
-}
-```
+Удаление категории: [DELETE /api/v1/categories/{slug}/](http://127.0.0.1:8000/api/v1/categories/{slug}/)
 
-Получение комментариев: [GET /api/v1/posts/{post_id}/comments/](http://127.0.0.1:8000/api/v1/posts/{post_id}/comments/)
+Получение жанров: [GET /api/v1/genres/](http://127.0.0.1:8000/api/v1/genres/)
 
-Получение комментария: [GET /api/v1/posts/{post_id}/comments/{id}/](http://127.0.0.1:8000/api/v1/posts/{post_id}/comments/{id}/)
+Добавление жанра: [POST /api/v1/genres/](http://127.0.0.1:8000/api/v1/genres/)
 
-Создание комментария: [POST /api/v1/posts/{post_id}/comments/](http://127.0.0.1:8000/api/v1/posts/{post_id}/comments/)
-```
-{
-"text": "string"
-}
-```
+Удаление жанра: [DELETE /api/v1/genres/{slug}/](http://127.0.0.1:8000/api/v1/genres/{slug}/)
 
 Список сообществ: [GET /api/v1/groups/](http://127.0.0.1:8000/api/v1/groups/)
 
@@ -85,16 +73,18 @@ python manage.py runserver
 Подписки: [GET /api/v1/follow/](http://127.0.0.1:8000/api/v1/follow/)
 
 Подписка: [POST /api/v1/follow/](http://127.0.0.1:8000/api/v1/follow/)
-```
-{
-"following": "string"
-}
-```
+
+
 ## Использованные технологии:
+* Python
+* Django Rest Framework
 * Django ORM
 * REST API
-* DRF
 
-## Автор:
+## Авторы:
 **[Viacheslav Korablev](https://github.com/VK73-dev/)**
+
+**[Roman Gromov](https://github.com/mrForza)**
+
+**[Lubov Skutina](https://github.com/LubovSkutina)**
 
