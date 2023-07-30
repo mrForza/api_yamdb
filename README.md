@@ -62,10 +62,29 @@ python manage.py runserver
 Получение категорий: [GET /api/v1/categories/](http://127.0.0.1:8000/api/v1/categories/)
 
 Добавление категории: [POST /api/v1/categories/](http://127.0.0.1:8000/api/v1/categories/)
+```
+{
+  "name": "string",
+  "slug": "string"
+}
+```
 
 Удаление категории: [DELETE /api/v1/categories/{slug}/](http://127.0.0.1:8000/api/v1/categories/{slug}/)
 
 Получение жанров: [GET /api/v1/genres/](http://127.0.0.1:8000/api/v1/genres/)
+```
+{
+  "count": 0,
+  "next": "string",
+  "previous": "string",
+  "results": [
+    {
+      "name": "string",
+      "slug": "string"
+    }
+  ]
+}
+```
 
 Добавление жанра: [POST /api/v1/genres/](http://127.0.0.1:8000/api/v1/genres/)
 
