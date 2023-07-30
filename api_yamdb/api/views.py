@@ -1,13 +1,5 @@
 from random import randint
 
-from api.filters import TitleFilter
-from api.permissions import (IsAdmin, IsAdminOrReadOnlyForList,
-                             IsAuthorOrAdminOrModerOrReadOnly)
-from api.serializers import (CategorySerializer, CommentSerializer,
-                             GenreSerializer, MeUserSerializer,
-                             ReviewSerializer, SignSerializer,
-                             TitleCreateSerializer, TitleSerializer,
-                             TokenSerializer, UserSerializer)
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
@@ -20,6 +12,15 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from reviews.models import Category, Genre, Review, Title, User
+
+from api.filters import TitleFilter
+from api.permissions import (IsAdmin, IsAdminOrReadOnlyForList,
+                             IsAuthorOrAdminOrModerOrReadOnly)
+from api.serializers import (CategorySerializer, CommentSerializer,
+                             GenreSerializer, MeUserSerializer,
+                             ReviewSerializer, SignSerializer,
+                             TitleCreateSerializer, TitleSerializer,
+                             TokenSerializer, UserSerializer)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
