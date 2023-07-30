@@ -47,6 +47,11 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
+Загрузить данные из csv файлов в БД:
+```
+python manage.py import_csv
+```
+
 Запустить проект:
 
 ```
@@ -65,15 +70,6 @@ python manage.py runserver
 Добавление жанра: [POST /api/v1/genres/](http://127.0.0.1:8000/api/v1/genres/)
 
 Удаление жанра: [DELETE /api/v1/genres/{slug}/](http://127.0.0.1:8000/api/v1/genres/{slug}/)
-
-Список сообществ: [GET /api/v1/groups/](http://127.0.0.1:8000/api/v1/groups/)
-
-Информация о сообществе: [GET /api/v1/groups/{id}/](http://127.0.0.1:8000/api/v1/groups/{id}/)
-
-Подписки: [GET /api/v1/follow/](http://127.0.0.1:8000/api/v1/follow/)
-
-Подписка: [POST /api/v1/follow/](http://127.0.0.1:8000/api/v1/follow/)
-
 
 ## Использованные технологии:
 * Python
