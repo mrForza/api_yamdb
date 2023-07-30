@@ -1,33 +1,30 @@
 from random import randint
 
-from api.serializers import (
-    UserSerializer, SignSerializer, MeUserSerializer, TokenSerializer,
-    CategorySerializer, GenreSerializer, TitleSerializer, TitleCreateSerializer,
-    ReviewSerializer, CommentSerializer
-)
 from api.filters import TitleFilter
-from api.permissions import IsAdmin, IsAdminOrReadOnly
-
-from django.shortcuts import get_object_or_404
+from api.permissions import (IsAdmin, IsAdminOrReadOnlyForList,
+                             IsAuthorOrAdminOrModerOrReadOnly)
+from api.serializers import (CategorySerializer, CommentSerializer,
+                             GenreSerializer, MeUserSerializer,
+                             ReviewSerializer, SignSerializer,
+                             TitleCreateSerializer, TitleSerializer,
+                             TokenSerializer, UserSerializer)
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from reviews.models import Category, Genre, Title, User, Review
-
-from rest_framework import viewsets, status, filters, mixins
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.pagination import PageNumberPagination
-
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from reviews.models import User
+from rest_framework_simplejwt.views import TokenObtainPairView
+from reviews.models import Category, Genre, Review, Title, User
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
+    permission_classes = (IsAuthorOrAdminOrModerOrReadOnly, )
 
     def get_queryset(self):
         try:
@@ -47,6 +44,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
+    permission_classes = (IsAuthorOrAdminOrModerOrReadOnly, )
 
     def get_queryset(self):
         try:
@@ -56,7 +54,7 @@ class CommentViewSet(viewsets.ModelViewSet):
             ).comments.all()
         except ObjectDoesNotExist:
             return None
-        
+
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
@@ -76,7 +74,7 @@ class ListCreateDestroyViewSet(
 class CategoryViewSet(ListCreateDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminOrReadOnly, )
+    permission_classes = (IsAdminOrReadOnlyForList, )
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -87,13 +85,13 @@ class GenreViewSet(ListCreateDestroyViewSet):
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
-    permission_classes = (IsAdminOrReadOnly, )
+    permission_classes = (IsAdminOrReadOnlyForList, )
     lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    permission_classes = (IsAdminOrReadOnly, )
+    permission_classes = (IsAdminOrReadOnlyForList, )
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
@@ -111,7 +109,7 @@ class UserViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ('get', 'post', 'patch', 'delete')
 
 
 class MeDetail(APIView):
