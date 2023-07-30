@@ -160,3 +160,15 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = '__all__'
+
+    def validate(self, data):
+        if self.context['request'].method == 'POST':
+            if Comment.objects.filter(
+                review=self.context['view'].kwargs.get('review_id'),
+                author=self.context['request'].user
+            ).exists():
+                raise ValidationError(
+                    detail='Вы уже оставили комментарий на этот отзыв!',
+                    code=400
+                )
+        return data

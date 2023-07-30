@@ -1,6 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.core import validators
-from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -196,17 +195,5 @@ class Comment(models.Model):
         related_name='comments'
     )
 
-    def save(self, **kwargs) -> None:
-        if kwargs.get('force_insert') and not kwargs.get('force_update'):
-            self.validate_unique()
-        return super().save(**kwargs)
-
-    def validate_unique(self, *args, **kwargs) -> None:
-        super(Comment, self).validate_unique(*args, **kwargs)
-        if Comment.objects.filter(
-            review=self.review, author=self.author
-        ).exists():
-            raise ValidationError(
-                message='Вы не можете оставить комментарий!',
-                code=None
-            )
+    class Meta:
+        unique_together = ('review', 'author')
