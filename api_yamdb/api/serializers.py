@@ -67,10 +67,7 @@ class TokenSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        fields = (
-            'name',
-            'slug'
-        )
+        exclude = ['id']
         model = Category
 
 
@@ -83,7 +80,7 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
 
 
-class TitleSerializer(serializers.ModelSerializer):
+class TitleReadOnlySerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
     rating = serializers.SerializerMethodField()

@@ -4,6 +4,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from reviews.validators import validate_year
+
 ROLES = (
     ('user', 'пользователь'),
     ('moderator', 'модератор'),
@@ -45,10 +47,10 @@ class User(AbstractUser):
         return self.username
 
 
-class Category(models.Model):
+class BaseModel(models.Model):
     name = models.CharField(
         max_length=256,
-        verbose_name='Категория'
+        verbose_name='Название'
     )
     slug = models.SlugField(
         unique=True,
@@ -57,42 +59,34 @@ class Category(models.Model):
         validators=[validators.validate_slug]
     )
 
+    def __str__(self):
+        return self.name
+
     class Meta:
+        abstract = True
         ordering = ('name',)
+
+
+class Category(BaseModel):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
-    def __str__(self):
-        return self.name
 
-
-class Genre(models.Model):
-    name = models.CharField(
-        max_length=256,
-        verbose_name='Жанр произведения'
-    )
-    slug = models.SlugField(
-        unique=True,
-        max_length=50,
-        verbose_name='Слаг',
-        validators=[validators.validate_slug]
-    )
-
-    class Meta:
-        ordering = ('name',)
-        verbose_name = 'Жанр произведения'
-        verbose_name_plural = 'Жанры произведений'
-
-    def __str__(self):
-        return self.name
+class Genre(BaseModel):
+    class Meta(BaseModel.Meta):
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
 
 
 class Title(models.Model):
     name = models.TextField(
         max_length=256,
-        verbose_name='Название произведения'
+        verbose_name='Произведение'
     )
-    year = models.IntegerField(verbose_name='Год выпуска')
+    year = models.IntegerField(verbose_name='Год выпуска',
+                               db_index=True,
+                               validators=[validate_year])
     description = models.TextField(
         blank=True,
         null=True,
@@ -100,7 +94,6 @@ class Title(models.Model):
     )
     genre = models.ManyToManyField(
         Genre,
-        through='TitleGenre',
         related_name='titles',
         verbose_name='Жанр произведения'
     )
@@ -113,34 +106,12 @@ class Title(models.Model):
     )
 
     class Meta:
+        ordering = ('name',)
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
 
     def __str__(self):
         return self.name
-
-
-class TitleGenre(models.Model):
-    title = models.ForeignKey(
-        Title,
-        blank=True,
-        null=True,
-        on_delete=models.CASCADE,
-        related_name='titles',
-        verbose_name='Произведение'
-    )
-    genre = models.ForeignKey(
-        Genre,
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='genres',
-        verbose_name='Жанр',
-    )
-
-    class Meta:
-        verbose_name = 'Произведение и жанр'
-        verbose_name_plural = 'Произведения и жанры'
 
 
 class Review(models.Model):
