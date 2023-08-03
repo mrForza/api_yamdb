@@ -1,5 +1,5 @@
 from rest_framework import filters, mixins, viewsets
-from api.permissions import IsAdminOrReadOnlyForList
+from api.permissions import IsAdminOrReadOnly
 
 
 class MyMixinSet(
@@ -8,7 +8,7 @@ class MyMixinSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    permission_classes = (IsAdminOrReadOnlyForList, )
+    permission_classes = (IsAdminOrReadOnly, )
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'

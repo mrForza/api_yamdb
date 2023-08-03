@@ -5,46 +5,84 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from reviews.validators import validate_year
+from api.validators import username_validator, username_not_me
+
+MAX_LENGTH_NAME = 150
+MAX_LENGTH_CODE = 150
+MAX_LENGTH_EMAIL = 254
+
+ROLE_USER = ('user', 'пользователь')
+ROLE_MODER = ('moderator', 'модератор')
+ROLE_ADMIN = ('admin', 'админ')
 
 ROLES = (
-    ('user', 'пользователь'),
-    ('moderator', 'модератор'),
-    ('admin', 'админ'),
+    ROLE_USER,
+    ROLE_MODER,
+    ROLE_ADMIN,
 )
 
 
 class User(AbstractUser):
+
+    username = models.CharField(
+        max_length=MAX_LENGTH_NAME,
+        verbose_name='Имя пользователя',
+        unique=True,
+        validators=(username_validator, username_not_me),
+    )
+    first_name = models.CharField(
+        max_length=MAX_LENGTH_NAME,
+        verbose_name='Имя',
+        blank=True,
+    )
+    last_name = models.CharField(
+        max_length=MAX_LENGTH_NAME,
+        verbose_name='Фамилия',
+        blank=True,
+    )
     role = models.CharField(
-        max_length=256,
+        max_length=len(max([role[0] for role in ROLES], key=len)),
         verbose_name='Роль',
-        default='user',
+        default=ROLES[0][0],
         choices=ROLES,
     )
     bio = models.TextField(
-        max_length=256,
         verbose_name='Биография',
         blank=True
     )
     email = models.EmailField(
-        max_length=254,
+        max_length=MAX_LENGTH_EMAIL,
         verbose_name='email address',
         unique=True,
-        blank=False,
     )
     confirmation_code = models.CharField(
-        max_length=6,
+        max_length=MAX_LENGTH_CODE,
         verbose_name='Код подтверждения',
         blank=True,
     )
-    password = models.CharField(_('password'), max_length=128, blank=True)
+    password = models.CharField(
+        _('password'),
+        max_length=MAX_LENGTH_CODE,
+        blank=True,
+    )
+    REQUIRED_FIELDS = ['email']
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         default_related_name = 'users'
+        ordering = ('username',)
 
     def __str__(self):
         return self.username
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
+
+    @property
+    def is_moder(self):
+        return self.role == 'moderator'
 
 
 class BaseModel(models.Model):

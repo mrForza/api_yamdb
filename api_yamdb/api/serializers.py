@@ -1,8 +1,12 @@
 from django.db.models import Avg
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.relations import SlugRelatedField
 from reviews.models import Category, Comment, Genre, Review, Title, User
+
+from reviews.models import MAX_LENGTH_NAME, MAX_LENGTH_CODE, MAX_LENGTH_EMAIL
+from api.validators import username_validator, username_not_me
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -21,20 +25,18 @@ class UserSerializer(serializers.ModelSerializer):
 
 class MeUserSerializer(UserSerializer):
 
-    class Meta:
-        fields = (
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'bio',
-            'role',
-        )
-        model = User
+    class Meta(UserSerializer.Meta):
         read_only_fields = ('role', )
 
 
 class SignSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        max_length=MAX_LENGTH_NAME,
+        validators=(username_validator, username_not_me),
+    )
+    email = serializers.EmailField(
+        max_length=MAX_LENGTH_EMAIL,
+    )
 
     class Meta:
         fields = (
@@ -45,24 +47,39 @@ class SignSerializer(serializers.ModelSerializer):
         model = User
         extra_kwargs = {'confirmation_code': {'write_only': True}}
 
+    def create(self, validated_data):
+        user, status_create = User.objects.get_or_create(
+            username=validated_data.get('username'),
+            email=validated_data.get('email'),
+        )
+        user.confirmation_code = str(default_token_generator.make_token(user))
+        return user
+
     def validate(self, data):
-        if data['username'] == 'me':
-            raise serializers.ValidationError(
-                'Использовать имя me в качестве username запрещено',
-                code=400
-            )
+        user = User.objects.filter(email=data.get('email'))
+        if user:
+            if user[0].username != data.get('username'):
+                raise ValidationError(
+                    detail=('Запрос содержит "email" ',
+                            'зарегистрированного пользователя')
+                )
+        user = User.objects.filter(username=data.get('username'))
+        if user:
+            if user[0].email != data.get('email'):
+                raise ValidationError(
+                    detail=('Запрос содержит "username" ',
+                            'зарегистрированного пользователя')
+                )
         return data
 
 
-class TokenSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(max_length=256)
+class TokenSerializer(serializers.Serializer):
 
-    class Meta:
-        fields = (
-            'username',
-            'confirmation_code',
-        )
-        model = User
+    username = serializers.CharField(
+        max_length=MAX_LENGTH_NAME,
+        validators=(username_validator, username_not_me),
+    )
+    confirmation_code = serializers.CharField(max_length=MAX_LENGTH_CODE)
 
 
 class CategorySerializer(serializers.ModelSerializer):
