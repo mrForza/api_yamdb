@@ -4,11 +4,14 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+
 ROLES = (
     ('user', 'пользователь'),
     ('moderator', 'модератор'),
     ('admin', 'админ'),
 )
+
+SCORE_VALIDATION_ERROR = 'Оценка должна быть в диапазоне от 1 до 10'
 
 
 class User(AbstractUser):
@@ -143,24 +146,30 @@ class TitleGenre(models.Model):
         verbose_name_plural = 'Произведения и жанры'
 
 
-class Review(models.Model):
-    text = models.TextField(verbose_name='Текст отзыва')
-    score = models.SmallIntegerField(
-        verbose_name='Оценка',
-        validators=[
-            MinValueValidator(1),
-            MaxValueValidator(10)
-        ]
-    )
+class ReviewCommentMixin(models.Model):
+    text = models.TextField(verbose_name='Текст')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Автор',
-        related_name='reviews'
+        verbose_name='Автор'
     )
     pub_date = models.DateTimeField(
         verbose_name='Дата и время публикации',
         auto_now_add=True
+    )
+
+    class Meta:
+        abstract = True
+        ordering = ('pub_date', )
+
+
+class Review(ReviewCommentMixin):
+    score = models.PositiveSmallIntegerField(
+        verbose_name='Оценка',
+        validators=[
+            MinValueValidator(1, SCORE_VALIDATION_ERROR),
+            MaxValueValidator(10, SCORE_VALIDATION_ERROR)
+        ]
     )
     title = models.ForeignKey(
         Title,
@@ -169,26 +178,20 @@ class Review(models.Model):
     )
 
     class Meta:
-        unique_together = ('author', 'title')
+        constraints = (
+            models.UniqueConstraint(
+                fields=('author', 'title'),
+                name='unique_author_title'
+            ),
+        )
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+
+    def __str__(self):
+        return self.text[:50]
 
 
-class Comment(models.Model):
-    text = models.TextField(verbose_name='Текст комментария')
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name='Автор',
-        related_name='comments',
-    )
-    review = models.ForeignKey(
-        Review,
-        on_delete=models.CASCADE,
-        verbose_name='Отзыв'
-    )
-    pub_date = models.DateTimeField(
-        verbose_name='Дата и время публикации',
-        auto_now_add=True
-    )
+class Comment(ReviewCommentMixin):
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
@@ -196,4 +199,14 @@ class Comment(models.Model):
     )
 
     class Meta:
-        unique_together = ('review', 'author')
+        constraints = (
+            models.UniqueConstraint(
+                fields=('author', 'review'),
+                name='unique_author_review'
+            ),
+        )
+        verbose_name = 'Комментарий'
+        verbose_name = 'Комментарии'
+
+    def __str__(self):
+        return self.text[:50]

@@ -1,7 +1,9 @@
 from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.relations import SlugRelatedField
+
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
@@ -14,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'bio',
-            'role',
+            'role'
         )
         model = User
 
@@ -28,7 +30,7 @@ class MeUserSerializer(UserSerializer):
             'first_name',
             'last_name',
             'bio',
-            'role',
+            'role'
         )
         model = User
         read_only_fields = ('role', )
@@ -127,23 +129,24 @@ class ReviewSerializer(serializers.ModelSerializer):
         slug_field='username',
         read_only=True
     )
-    title = serializers.StringRelatedField(
-        read_only=True
-    )
 
     class Meta:
         model = Review
         fields = '__all__'
+        read_only_fields = ('title', )
 
     def validate(self, data):
         if self.context['request'].method == 'POST':
+            title = get_object_or_404(
+                Title,
+                pk=self.context['view'].kwargs.get('title_id')
+            )
             if Review.objects.filter(
-                title=self.context['view'].kwargs.get('title_id'),
+                title=title,
                 author=self.context['request'].user
             ).exists():
                 raise ValidationError(
-                    detail='Вы уже оставили отзыв на это произведение!',
-                    code=400
+                    detail='Вы уже оставили отзыв на это произведение!'
                 )
         return data
 
@@ -153,13 +156,11 @@ class CommentSerializer(serializers.ModelSerializer):
         slug_field='username',
         read_only=True
     )
-    review = serializers.StringRelatedField(
-        read_only=True
-    )
 
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'pub_date')
+        read_only_fields = ('review', )
 
     def validate(self, data):
         if self.context['request'].method == 'POST':
