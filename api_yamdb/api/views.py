@@ -1,5 +1,4 @@
 from django.db.models import Avg
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -12,7 +11,6 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from reviews.models import Category, Genre, Review, Title, User
 from api.filters import TitleFilter
 from api.mixins import MyMixinSet
 from api.permissions import (IsAdmin, IsAdminOrReadOnly,
@@ -23,6 +21,28 @@ from api.serializers import (CategorySerializer, CommentSerializer,
                              TitleCreateSerializer, TitleReadOnlySerializer,
                              TokenSerializer, UserSerializer)
 from reviews.models import Category, Genre, Review, Title, User
+
+
+class CategoryViewSet(MyMixinSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class GenreViewSet(MyMixinSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
+    permission_classes = (IsAdminOrReadOnly, )
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
+
+    def get_serializer_class(self):
+        if self.request.method in ('POST', 'PATCH',):
+            return TitleCreateSerializer
+        return TitleReadOnlySerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -50,10 +70,12 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthorOrAdminOrModerOrReadOnly, )
 
     def get_review_object(self):
-        return get_object_or_404(
+        review = get_object_or_404(
             Review,
             pk=self.kwargs.get('review_id')
         )
+        if Title.objects.get(pk=self.kwargs.get('title_id')) == review.title:
+            return review
 
     def get_queryset(self):
         return self.get_review_object().comments.all()
@@ -63,28 +85,6 @@ class CommentViewSet(viewsets.ModelViewSet):
             author=self.request.user,
             review=self.get_review_object()
         )
-
-
-class CategoryViewSet(MyMixinSet):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-
-
-class GenreViewSet(MyMixinSet):
-    queryset = Genre.objects.all()
-    serializer_class = GenreSerializer
-
-
-class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
-    permission_classes = (IsAdminOrReadOnly, )
-    filter_backends = (DjangoFilterBackend,)
-    filterset_class = TitleFilter
-
-    def get_serializer_class(self):
-        if self.request.method in ('POST', 'PATCH',):
-            return TitleCreateSerializer
-        return TitleReadOnlySerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -105,8 +105,10 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def get_and_patch(self, request):
         if request.method == 'GET':
-            return Response(MeUserSerializer(self.request.user).data,
-                            status=status.HTTP_200_OK)
+            return Response(
+                MeUserSerializer(self.request.user).data,
+                status=status.HTTP_200_OK
+            )
         elif request.method == 'PATCH':
             serializer = MeUserSerializer(
                 self.request.user,

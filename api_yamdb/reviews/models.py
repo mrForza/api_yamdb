@@ -4,13 +4,16 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from api.validators import username_validator, username_not_me
-from reviews.validators import validate_year
+from api.validators import (
+    username_validator, username_not_me, validate_year
+)
 
 
+MAX_LENGTH_SLUG = 50
 MAX_LENGTH_NAME = 150
 MAX_LENGTH_CODE = 150
 MAX_LENGTH_EMAIL = 254
+MAX_LENGTH_BASE_TITLE = 256
 
 ROLE_USER = ('user', 'пользователь')
 ROLE_MODER = ('moderator', 'модератор')
@@ -90,12 +93,12 @@ class User(AbstractUser):
 
 class BaseModel(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_BASE_TITLE,
         verbose_name='Название'
     )
     slug = models.SlugField(
         unique=True,
-        max_length=50,
+        max_length=MAX_LENGTH_SLUG,
         verbose_name='Слаг',
         validators=[validators.validate_slug]
     )
@@ -109,12 +112,14 @@ class BaseModel(models.Model):
 
 
 class Category(BaseModel):
+
     class Meta(BaseModel.Meta):
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
 
 class Genre(BaseModel):
+
     class Meta(BaseModel.Meta):
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
@@ -122,12 +127,14 @@ class Genre(BaseModel):
 
 class Title(models.Model):
     name = models.TextField(
-        max_length=256,
-        verbose_name='Произведение'
+        max_length=MAX_LENGTH_BASE_TITLE,
+        verbose_name='Название'
     )
-    year = models.IntegerField(verbose_name='Год выпуска',
-                               db_index=True,
-                               validators=[validate_year])
+    year = models.IntegerField(
+        verbose_name='Год выпуска',
+        db_index=True,
+        validators=[validate_year]
+    )
     description = models.TextField(
         blank=True,
         null=True,
@@ -147,7 +154,7 @@ class Title(models.Model):
     )
 
     class Meta:
-        ordering = ('name',)
+        ordering = ('name', )
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
 

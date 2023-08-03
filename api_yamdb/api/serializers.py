@@ -1,14 +1,14 @@
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.relations import SlugRelatedField
 
-from reviews.models import Category, Comment, Genre, Review, Title, User
-
-from reviews.models import MAX_LENGTH_NAME, MAX_LENGTH_CODE, MAX_LENGTH_EMAIL
 from api.validators import username_validator, username_not_me
+from reviews.models import (
+    Category, Comment, Genre, Review, Title, User,
+    MAX_LENGTH_NAME, MAX_LENGTH_CODE, MAX_LENGTH_EMAIL
+)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -102,7 +102,7 @@ class GenreSerializer(serializers.ModelSerializer):
 class TitleReadOnlySerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
-    rating = serializers.SerializerMethodField()
+    rating = serializers.FloatField()
 
     class Meta:
         model = Title
@@ -114,9 +114,6 @@ class TitleReadOnlySerializer(serializers.ModelSerializer):
             'name', 'year', 'rating',
             'description', 'genre', 'category', 'rating'
         )
-
-    def get_rating(self, obj):
-        return obj.reviews.aggregate(Avg('score')).get('score__avg')
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
@@ -178,8 +175,12 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if self.context['request'].method == 'POST':
+            review = get_object_or_404(
+                Review,
+                pk=self.context['view'].kwargs.get('review_id')
+            )
             if Comment.objects.filter(
-                review=self.context['view'].kwargs.get('review_id'),
+                review=review,
                 author=self.context['request'].user
             ).exists():
                 raise ValidationError(
