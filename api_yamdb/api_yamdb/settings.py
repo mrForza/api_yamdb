@@ -9,6 +9,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+DEFAULT_FROM_EMAIL = 'api_yamdb@yamdb.not'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
