@@ -1,8 +1,14 @@
-from django.db.models import Avg
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.relations import SlugRelatedField
-from reviews.models import Category, Comment, Genre, Review, Title, User
+
+from api.validators import username_validator, username_not_me
+from reviews.models import (
+    Category, Comment, Genre, Review, Title, User,
+    MAX_LENGTH_NAME, MAX_LENGTH_CODE, MAX_LENGTH_EMAIL
+)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -14,27 +20,25 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'bio',
-            'role',
+            'role'
         )
         model = User
 
 
 class MeUserSerializer(UserSerializer):
 
-    class Meta:
-        fields = (
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'bio',
-            'role',
-        )
-        model = User
+    class Meta(UserSerializer.Meta):
         read_only_fields = ('role', )
 
 
 class SignSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        max_length=MAX_LENGTH_NAME,
+        validators=(username_validator, username_not_me),
+    )
+    email = serializers.EmailField(
+        max_length=MAX_LENGTH_EMAIL,
+    )
 
     class Meta:
         fields = (
@@ -45,32 +49,44 @@ class SignSerializer(serializers.ModelSerializer):
         model = User
         extra_kwargs = {'confirmation_code': {'write_only': True}}
 
+    def create(self, validated_data):
+        user, status_create = User.objects.get_or_create(
+            username=validated_data.get('username'),
+            email=validated_data.get('email'),
+        )
+        user.confirmation_code = str(default_token_generator.make_token(user))
+        return user
+
     def validate(self, data):
-        if data['username'] == 'me':
-            raise serializers.ValidationError(
-                'Использовать имя me в качестве username запрещено',
-                code=400
-            )
+        user = User.objects.filter(email=data.get('email'))
+        if user:
+            if user[0].username != data.get('username'):
+                raise ValidationError(
+                    detail=('Запрос содержит "email" ',
+                            'зарегистрированного пользователя')
+                )
+        user = User.objects.filter(username=data.get('username'))
+        if user:
+            if user[0].email != data.get('email'):
+                raise ValidationError(
+                    detail=('Запрос содержит "username" ',
+                            'зарегистрированного пользователя')
+                )
         return data
 
 
-class TokenSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(max_length=256)
+class TokenSerializer(serializers.Serializer):
 
-    class Meta:
-        fields = (
-            'username',
-            'confirmation_code',
-        )
-        model = User
+    username = serializers.CharField(
+        max_length=MAX_LENGTH_NAME,
+        validators=(username_validator, username_not_me),
+    )
+    confirmation_code = serializers.CharField(max_length=MAX_LENGTH_CODE)
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        fields = (
-            'name',
-            'slug'
-        )
+        exclude = ['id']
         model = Category
 
 
@@ -83,10 +99,10 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
 
 
-class TitleSerializer(serializers.ModelSerializer):
+class TitleReadOnlySerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
-    rating = serializers.SerializerMethodField()
+    rating = serializers.FloatField()
 
     class Meta:
         model = Title
@@ -98,9 +114,6 @@ class TitleSerializer(serializers.ModelSerializer):
             'name', 'year', 'rating',
             'description', 'genre', 'category', 'rating'
         )
-
-    def get_rating(self, obj):
-        return obj.reviews.aggregate(Avg('score')).get('score__avg')
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
@@ -127,23 +140,24 @@ class ReviewSerializer(serializers.ModelSerializer):
         slug_field='username',
         read_only=True
     )
-    title = serializers.StringRelatedField(
-        read_only=True
-    )
 
     class Meta:
         model = Review
         fields = '__all__'
+        read_only_fields = ('title', )
 
     def validate(self, data):
         if self.context['request'].method == 'POST':
+            title = get_object_or_404(
+                Title,
+                pk=self.context['view'].kwargs.get('title_id')
+            )
             if Review.objects.filter(
-                title=self.context['view'].kwargs.get('title_id'),
+                title=title,
                 author=self.context['request'].user
             ).exists():
                 raise ValidationError(
-                    detail='Вы уже оставили отзыв на это произведение!',
-                    code=400
+                    detail='Вы уже оставили отзыв на это произведение!'
                 )
         return data
 
@@ -153,18 +167,20 @@ class CommentSerializer(serializers.ModelSerializer):
         slug_field='username',
         read_only=True
     )
-    review = serializers.StringRelatedField(
-        read_only=True
-    )
 
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'pub_date')
+        read_only_fields = ('review', )
 
     def validate(self, data):
         if self.context['request'].method == 'POST':
+            review = get_object_or_404(
+                Review,
+                pk=self.context['view'].kwargs.get('review_id')
+            )
             if Comment.objects.filter(
-                review=self.context['view'].kwargs.get('review_id'),
+                review=review,
                 author=self.context['request'].user
             ).exists():
                 raise ValidationError(
