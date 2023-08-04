@@ -103,12 +103,12 @@ class BaseModel(models.Model):
         validators=[validators.validate_slug]
     )
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         abstract = True
         ordering = ('name',)
+
+    def __str__(self):
+        return self.name
 
 
 class Category(BaseModel):
@@ -142,14 +142,12 @@ class Title(models.Model):
     )
     genre = models.ManyToManyField(
         Genre,
-        related_name='titles',
         verbose_name='Жанр произведения'
     )
     category = models.ForeignKey(
         Category,
         null=True,
         on_delete=models.SET_NULL,
-        related_name='titles',
         verbose_name='Категория произведения'
     )
 
@@ -157,6 +155,7 @@ class Title(models.Model):
         ordering = ('name', )
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
+        default_related_name = 'titles'
 
     def __str__(self):
         return self.name

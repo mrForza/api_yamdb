@@ -92,28 +92,19 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = (
-            'name',
-            'slug'
-        )
+        exclude = ['id']
         model = Genre
 
 
 class TitleReadOnlySerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
-    rating = serializers.FloatField()
+    rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Title
-        fields = (
-            'id', 'name', 'year', 'rating',
-            'description', 'genre', 'category', 'rating'
-        )
-        read_only_fields = (
-            'name', 'year', 'rating',
-            'description', 'genre', 'category', 'rating'
-        )
+        fields = '__all__'
+        read_only_fields = '__all__'
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
