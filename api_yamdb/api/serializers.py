@@ -1,10 +1,10 @@
 from django.shortcuts import get_object_or_404
-from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework.exceptions import ValidationError
 from rest_framework.relations import SlugRelatedField
 
-from api.validators import username_validator, username_not_me
+from api.validators import username_validator
 from reviews.models import (
     Category, Comment, Genre, Review, Title, User,
     MAX_LENGTH_NAME, MAX_LENGTH_CODE, MAX_LENGTH_EMAIL
@@ -34,7 +34,7 @@ class MeUserSerializer(UserSerializer):
 class SignSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         max_length=MAX_LENGTH_NAME,
-        validators=(username_validator, username_not_me),
+        validators=(username_validator, ),
     )
     email = serializers.EmailField(
         max_length=MAX_LENGTH_EMAIL,
@@ -79,7 +79,7 @@ class TokenSerializer(serializers.Serializer):
 
     username = serializers.CharField(
         max_length=MAX_LENGTH_NAME,
-        validators=(username_validator, username_not_me),
+        validators=(username_validator, ),
     )
     confirmation_code = serializers.CharField(max_length=MAX_LENGTH_CODE)
 

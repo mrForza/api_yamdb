@@ -5,7 +5,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from api.validators import (
-    username_validator, username_not_me, validate_year
+    username_validator, validate_year
 )
 
 
@@ -15,14 +15,14 @@ MAX_LENGTH_CODE = 150
 MAX_LENGTH_EMAIL = 254
 MAX_LENGTH_BASE_TITLE = 256
 
-ROLE_USER = ('user', 'пользователь')
-ROLE_MODER = ('moderator', 'модератор')
-ROLE_ADMIN = ('admin', 'админ')
+ROLE_USER = 'user'
+ROLE_MODER = 'moderator'
+ROLE_ADMIN = 'admin'
 
 ROLES = (
-    ROLE_USER,
-    ROLE_MODER,
-    ROLE_ADMIN,
+    (ROLE_USER, 'пользователь'),
+    (ROLE_MODER, 'модератор'),
+    (ROLE_ADMIN, 'админ'),
 )
 
 SCORE_VALIDATION_ERROR = 'Оценка должна быть в диапазоне от 1 до 10'
@@ -34,7 +34,7 @@ class User(AbstractUser):
         max_length=MAX_LENGTH_NAME,
         verbose_name='Имя пользователя',
         unique=True,
-        validators=(username_validator, username_not_me),
+        validators=(username_validator, ),
     )
     first_name = models.CharField(
         max_length=MAX_LENGTH_NAME,
@@ -49,7 +49,7 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=len(max([role[0] for role in ROLES], key=len)),
         verbose_name='Роль',
-        default=ROLES[0][0],
+        default=ROLE_USER,
         choices=ROLES,
     )
     bio = models.TextField(
@@ -84,11 +84,11 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == 'admin'
+        return self.role == ROLE_ADMIN
 
     @property
     def is_moder(self):
-        return self.role == 'moderator'
+        return self.role == ROLE_MODER
 
 
 class BaseModel(models.Model):
