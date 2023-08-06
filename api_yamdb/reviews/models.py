@@ -203,7 +203,8 @@ class Review(ReviewComment):
         verbose_name_plural = 'Отзывы'
 
     def __str__(self):
-        return f'Отзыв {self.author} на произведение {self.title}'
+        return (f'Отзыв пользователя {self.author}'
+                f' на произведение {self.title}')
 
 
 class Comment(ReviewComment):
@@ -224,4 +225,5 @@ class Comment(ReviewComment):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return f'Комментарий {self.author} на отзыв {self.review}'
+        return (f'Комментарий пользователя {self.author}'
+                f' на отзыв {self.review}')
