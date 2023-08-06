@@ -1,6 +1,5 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from django.contrib.auth.tokens import default_token_generator
 from rest_framework.exceptions import ValidationError
 from rest_framework.relations import SlugRelatedField
 
@@ -49,30 +48,23 @@ class SignSerializer(serializers.ModelSerializer):
         model = User
         extra_kwargs = {'confirmation_code': {'write_only': True}}
 
-    def create(self, validated_data):
-        user, status_create = User.objects.get_or_create(
-            username=validated_data.get('username'),
-            email=validated_data.get('email'),
-        )
-        user.confirmation_code = str(default_token_generator.make_token(user))
-        return user
+    def validate_username(self, value):
+        user = User.objects.filter(username=value).first()
+        if user and user.email != self.initial_data.get('email'):
+            raise ValidationError(
+                detail=('Запрос содержит "username" ',
+                        'зарегистрированного пользователя')
+            )
+        return value
 
-    def validate(self, data):
-        user = User.objects.filter(email=data.get('email'))
-        if user:
-            if user[0].username != data.get('username'):
-                raise ValidationError(
-                    detail=('Запрос содержит "email" ',
-                            'зарегистрированного пользователя')
-                )
-        user = User.objects.filter(username=data.get('username'))
-        if user:
-            if user[0].email != data.get('email'):
-                raise ValidationError(
-                    detail=('Запрос содержит "username" ',
-                            'зарегистрированного пользователя')
-                )
-        return data
+    def validate_email(self, value):
+        user = User.objects.filter(email=value).first()
+        if user and user.username != self.initial_data.get('username'):
+            raise ValidationError(
+                detail=('Запрос содержит "email" ',
+                        'зарегистрированного пользователя')
+            )
+        return value
 
 
 class TokenSerializer(serializers.Serializer):
@@ -103,8 +95,11 @@ class TitleReadOnlySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = '__all__'
-        read_only_fields = '__all__'
+        fields = (
+            'id', 'name', 'year', 'rating',
+            'description', 'genre', 'category',
+        )
+        read_only_fields = fields
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
