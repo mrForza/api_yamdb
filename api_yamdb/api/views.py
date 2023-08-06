@@ -3,6 +3,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -126,9 +127,13 @@ class APISign(APIView):
     def post(self, request):
         serializer = SignSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        username = request.data.get('username')
-        user = get_object_or_404(User, username=username)
+
+        user, status_create = User.objects.get_or_create(
+            username=request.data.get('username'),
+            email=request.data.get('email'),
+        )
+
+        user.confirmation_code = str(default_token_generator.make_token(user))
 
         send_mail(
             subject='Confirmation code',
