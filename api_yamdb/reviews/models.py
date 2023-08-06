@@ -161,7 +161,7 @@ class Title(models.Model):
         return self.name
 
 
-class ReviewCommentMixin(models.Model):
+class ReviewComment(models.Model):
     text = models.TextField(verbose_name='Текст')
     author = models.ForeignKey(
         User,
@@ -178,7 +178,7 @@ class ReviewCommentMixin(models.Model):
         ordering = ('pub_date', )
 
 
-class Review(ReviewCommentMixin):
+class Review(ReviewComment):
     score = models.PositiveSmallIntegerField(
         verbose_name='Оценка',
         validators=[
@@ -203,10 +203,10 @@ class Review(ReviewCommentMixin):
         verbose_name_plural = 'Отзывы'
 
     def __str__(self):
-        return self.text[:50]
+        return f'Отзыв {self.author} на произведение {self.title}'
 
 
-class Comment(ReviewCommentMixin):
+class Comment(ReviewComment):
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
@@ -221,7 +221,7 @@ class Comment(ReviewCommentMixin):
             ),
         )
         verbose_name = 'Комментарий'
-        verbose_name = 'Комментарии'
+        verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return self.text[:50]
+        return f'Комментарий {self.author} на отзыв {self.review}'

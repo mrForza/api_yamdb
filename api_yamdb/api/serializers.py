@@ -58,20 +58,20 @@ class SignSerializer(serializers.ModelSerializer):
         return user
 
     def validate(self, data):
-        user = User.objects.filter(email=data.get('email'))
-        if user:
-            if user[0].username != data.get('username'):
-                raise ValidationError(
-                    detail=('Запрос содержит "email" ',
-                            'зарегистрированного пользователя')
-                )
-        user = User.objects.filter(username=data.get('username'))
-        if user:
-            if user[0].email != data.get('email'):
-                raise ValidationError(
-                    detail=('Запрос содержит "username" ',
-                            'зарегистрированного пользователя')
-                )
+        #user = User.objects.get(email=data.get('email'))
+        if User.objects.filter(email=data.get('email')).exists():
+            #if user[0].username != data.get('username'):
+            raise ValidationError(
+                detail=('Запрос содержит "email" ',
+                        'зарегистрированного пользователя')
+            )
+        #user = User.objects.filter(username=data.get('username'))
+        if User.objects.filter(username=data.get('username')).exists():
+            #if user[0].email != data.get('email'):
+            raise ValidationError(
+                detail=('Запрос содержит "username" ',
+                        'зарегистрированного пользователя')
+            )
         return data
 
 
@@ -104,7 +104,7 @@ class TitleReadOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = '__all__'
-        read_only_fields = '__all__'
+        read_only_fields = ('category', 'genre', 'rating')
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
@@ -175,7 +175,6 @@ class CommentSerializer(serializers.ModelSerializer):
                 author=self.context['request'].user
             ).exists():
                 raise ValidationError(
-                    detail='Вы уже оставили комментарий на этот отзыв!',
-                    code=400
+                    detail='Вы уже оставили комментарий на этот отзыв!'
                 )
         return data
