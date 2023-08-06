@@ -5,7 +5,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from api.validators import (
-    username_validator, username_not_me, validate_year
+    username_validator, validate_year
 )
 
 
@@ -15,14 +15,14 @@ MAX_LENGTH_CODE = 150
 MAX_LENGTH_EMAIL = 254
 MAX_LENGTH_BASE_TITLE = 256
 
-ROLE_USER = ('user', 'пользователь')
-ROLE_MODER = ('moderator', 'модератор')
-ROLE_ADMIN = ('admin', 'админ')
+ROLE_USER = 'user'
+ROLE_MODER = 'moderator'
+ROLE_ADMIN = 'admin'
 
 ROLES = (
-    ROLE_USER,
-    ROLE_MODER,
-    ROLE_ADMIN,
+    (ROLE_USER, 'пользователь'),
+    (ROLE_MODER, 'модератор'),
+    (ROLE_ADMIN, 'админ'),
 )
 
 SCORE_VALIDATION_ERROR = 'Оценка должна быть в диапазоне от 1 до 10'
@@ -34,7 +34,7 @@ class User(AbstractUser):
         max_length=MAX_LENGTH_NAME,
         verbose_name='Имя пользователя',
         unique=True,
-        validators=(username_validator, username_not_me),
+        validators=(username_validator, ),
     )
     first_name = models.CharField(
         max_length=MAX_LENGTH_NAME,
@@ -49,7 +49,7 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=len(max([role[0] for role in ROLES], key=len)),
         verbose_name='Роль',
-        default=ROLES[0][0],
+        default=ROLE_USER,
         choices=ROLES,
     )
     bio = models.TextField(
@@ -84,11 +84,11 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == 'admin'
+        return self.role == ROLE_ADMIN
 
     @property
     def is_moder(self):
-        return self.role == 'moderator'
+        return self.role == ROLE_MODER
 
 
 class BaseModel(models.Model):
@@ -103,12 +103,12 @@ class BaseModel(models.Model):
         validators=[validators.validate_slug]
     )
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         abstract = True
         ordering = ('name',)
+
+    def __str__(self):
+        return self.name
 
 
 class Category(BaseModel):
@@ -142,14 +142,12 @@ class Title(models.Model):
     )
     genre = models.ManyToManyField(
         Genre,
-        related_name='titles',
         verbose_name='Жанр произведения'
     )
     category = models.ForeignKey(
         Category,
         null=True,
         on_delete=models.SET_NULL,
-        related_name='titles',
         verbose_name='Категория произведения'
     )
 
@@ -157,12 +155,13 @@ class Title(models.Model):
         ordering = ('name', )
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
+        default_related_name = 'titles'
 
     def __str__(self):
         return self.name
 
 
-class ReviewCommentMixin(models.Model):
+class ReviewComment(models.Model):
     text = models.TextField(verbose_name='Текст')
     author = models.ForeignKey(
         User,
@@ -179,7 +178,7 @@ class ReviewCommentMixin(models.Model):
         ordering = ('pub_date', )
 
 
-class Review(ReviewCommentMixin):
+class Review(ReviewComment):
     score = models.PositiveSmallIntegerField(
         verbose_name='Оценка',
         validators=[
@@ -204,10 +203,11 @@ class Review(ReviewCommentMixin):
         verbose_name_plural = 'Отзывы'
 
     def __str__(self):
-        return self.text[:50]
+        return (f'Отзыв пользователя {self.author}'
+                f' на произведение {self.title}')
 
 
-class Comment(ReviewCommentMixin):
+class Comment(ReviewComment):
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
@@ -222,7 +222,8 @@ class Comment(ReviewCommentMixin):
             ),
         )
         verbose_name = 'Комментарий'
-        verbose_name = 'Комментарии'
+        verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return self.text[:50]
+        return (f'Комментарий пользователя {self.author}'
+                f' на отзыв {self.review}')

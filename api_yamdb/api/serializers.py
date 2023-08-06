@@ -1,10 +1,9 @@
 from django.shortcuts import get_object_or_404
-from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.relations import SlugRelatedField
 
-from api.validators import username_validator, username_not_me
+from api.validators import username_validator
 from reviews.models import (
     Category, Comment, Genre, Review, Title, User,
     MAX_LENGTH_NAME, MAX_LENGTH_CODE, MAX_LENGTH_EMAIL
@@ -34,7 +33,7 @@ class MeUserSerializer(UserSerializer):
 class SignSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         max_length=MAX_LENGTH_NAME,
-        validators=(username_validator, username_not_me),
+        validators=(username_validator, ),
     )
     email = serializers.EmailField(
         max_length=MAX_LENGTH_EMAIL,
@@ -49,37 +48,30 @@ class SignSerializer(serializers.ModelSerializer):
         model = User
         extra_kwargs = {'confirmation_code': {'write_only': True}}
 
-    def create(self, validated_data):
-        user, status_create = User.objects.get_or_create(
-            username=validated_data.get('username'),
-            email=validated_data.get('email'),
-        )
-        user.confirmation_code = str(default_token_generator.make_token(user))
-        return user
+    def validate_username(self, value):
+        user = User.objects.filter(username=value).first()
+        if user and user.email != self.initial_data.get('email'):
+            raise ValidationError(
+                detail=('Запрос содержит "username" ',
+                        'зарегистрированного пользователя')
+            )
+        return value
 
-    def validate(self, data):
-        user = User.objects.filter(email=data.get('email'))
-        if user:
-            if user[0].username != data.get('username'):
-                raise ValidationError(
-                    detail=('Запрос содержит "email" ',
-                            'зарегистрированного пользователя')
-                )
-        user = User.objects.filter(username=data.get('username'))
-        if user:
-            if user[0].email != data.get('email'):
-                raise ValidationError(
-                    detail=('Запрос содержит "username" ',
-                            'зарегистрированного пользователя')
-                )
-        return data
+    def validate_email(self, value):
+        user = User.objects.filter(email=value).first()
+        if user and user.username != self.initial_data.get('username'):
+            raise ValidationError(
+                detail=('Запрос содержит "email" ',
+                        'зарегистрированного пользователя')
+            )
+        return value
 
 
 class TokenSerializer(serializers.Serializer):
 
     username = serializers.CharField(
         max_length=MAX_LENGTH_NAME,
-        validators=(username_validator, username_not_me),
+        validators=(username_validator, ),
     )
     confirmation_code = serializers.CharField(max_length=MAX_LENGTH_CODE)
 
@@ -92,28 +84,22 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = (
-            'name',
-            'slug'
-        )
+        exclude = ['id']
         model = Genre
 
 
 class TitleReadOnlySerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
-    rating = serializers.FloatField()
+    rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Title
         fields = (
             'id', 'name', 'year', 'rating',
-            'description', 'genre', 'category', 'rating'
+            'description', 'genre', 'category',
         )
-        read_only_fields = (
-            'name', 'year', 'rating',
-            'description', 'genre', 'category', 'rating'
-        )
+        read_only_fields = fields
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
@@ -184,7 +170,6 @@ class CommentSerializer(serializers.ModelSerializer):
                 author=self.context['request'].user
             ).exists():
                 raise ValidationError(
-                    detail='Вы уже оставили комментарий на этот отзыв!',
-                    code=400
+                    detail='Вы уже оставили комментарий на этот отзыв!'
                 )
         return data
